@@ -1,3 +1,4 @@
+
 package org.yourcompany.yourproject.inventory;
 
 import com.bloodbank.common.DatabaseConnection;
@@ -117,5 +118,39 @@ public class InventoryManager {
             e.printStackTrace();
             return false;
         }
+    }
+
+
+    // Count available, non-expired units for a blood group and component
+    public int getAvailableStock(
+            BloodGroup bloodGroup,
+            BloodComponent component) {
+
+        String query =
+                "SELECT COUNT(*) FROM blood_inventory " +
+                "WHERE blood_group = ? " +
+                "AND component = ? " +
+                "AND status = 'AVAILABLE' " +
+                "AND expiry_date >= ?";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+
+            pstmt.setString(1, bloodGroup.name());
+            pstmt.setString(2, component.name());
+            pstmt.setDate(3, Date.valueOf(LocalDate.now()));
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+
+        return -1;
     }
 }

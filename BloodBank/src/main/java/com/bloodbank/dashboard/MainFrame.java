@@ -19,6 +19,7 @@ public class MainFrame extends JFrame {
     private final JPanel mainPanel;
     private final LoginPanel loginPanel;
     private final InventoryPanel inventoryPanel;
+
     private String currentDashboardKey;
     private User currentUser;
 
@@ -37,21 +38,17 @@ public class MainFrame extends JFrame {
         mainPanel.setBackground(DashboardTheme.BACKGROUND);
 
         MySQLUserRepository userRepository = new MySQLUserRepository();
-        AuthenticationService authenticationService = new AuthenticationService(userRepository);
+        AuthenticationService authenticationService =
+                new AuthenticationService(userRepository);
 
         loginPanel = new LoginPanel(authenticationService, this);
-        mainPanel.add(loginPanel, "LOGIN");
         inventoryPanel = new InventoryPanel(this);
+
+        mainPanel.add(loginPanel, "LOGIN");
         mainPanel.add(inventoryPanel, "INVENTORY");
         mainPanel.add(new DonationHistoryUI(), "DONATIONS");
         mainPanel.add(new AdminRequestPanel(this), "ADMIN_REQUESTS");
-        // Add blood request screen
-        mainPanel.add(
-                new PlaceholderPanel("Blood Request — Coming Soon"),
-                "REQUESTS"
-        );
 
-        // Add everything to the JFrame
         add(mainPanel);
 
         cardLayout.show(mainPanel, "LOGIN");
@@ -61,11 +58,13 @@ public class MainFrame extends JFrame {
     public void showDashboard(User user) {
         currentUser = user;
         inventoryPanel.setEditingEnabled(user.getRole() == Role.ADMIN);
+
         if (user.getRole() == Role.ADMIN) {
             currentDashboardKey = "ADMIN";
             AdminDashboard dashboard = new AdminDashboard(this);
             mainPanel.add(dashboard, "ADMIN");
             cardLayout.show(mainPanel, "ADMIN");
+
         } else if (user.getRole() == Role.HOSPITAL) {
             currentDashboardKey = "HOSPITAL";
             HospitalDashboard dashboard = new HospitalDashboard(this);
@@ -90,35 +89,44 @@ public class MainFrame extends JFrame {
             if (currentUser == null) {
                 return;
             }
-            inventoryPanel.setEditingEnabled(currentUser.getRole() == Role.ADMIN);
+
+            inventoryPanel.setEditingEnabled(
+                    currentUser.getRole() == Role.ADMIN
+            );
             inventoryPanel.refreshTable();
+
         } else if ("ADMIN_REQUESTS".equals(screenName)
-                && (currentUser == null || currentUser.getRole() != Role.ADMIN)) {
+                && (currentUser == null
+                || currentUser.getRole() != Role.ADMIN)) {
             return;
         }
+
         cardLayout.show(mainPanel, screenName);
     }
+
     public void showHospitalRequests() {
-    HospitalRequestPanel requestPanel =
-            new HospitalRequestPanel(this);
+        HospitalRequestPanel requestPanel = new HospitalRequestPanel(this);
 
-    mainPanel.add(requestPanel, "REQUESTS");
-    cardLayout.show(mainPanel, "REQUESTS");
+        mainPanel.add(requestPanel, "REQUESTS");
+        cardLayout.show(mainPanel, "REQUESTS");
 
-    mainPanel.revalidate();
-    mainPanel.repaint();
-}
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
 
     public void showLogin() {
         currentDashboardKey = null;
         currentUser = null;
         inventoryPanel.setEditingEnabled(false);
+
         loginPanel.clearFields();
         cardLayout.show(mainPanel, "LOGIN");
     }
+
     public User getCurrentUser() {
-    return currentUser;
+        return currentUser;
     }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MainFrame::new);
     }
