@@ -76,14 +76,19 @@ public final class DashboardTheme {
     }
 
     public static JPanel createStatCard(String labelText, String valueText, Color accent) {
+        JLabel valueLabel = new JLabel(valueText, SwingConstants.CENTER);
+        return createStatCard(labelText, valueLabel, accent);
+    }
+
+    public static JPanel createStatCard(String labelText, JLabel valueLabel, Color accent) {
         JPanel card = new JPanel(new BorderLayout(8, 8));
         card.setOpaque(true);
         card.setBackground(PANEL);
         card.setBorder(new RoundedBorder(accent, 18));
 
-        JLabel valueLabel = new JLabel(valueText, SwingConstants.CENTER);
         valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         valueLabel.setForeground(accent.darker());
+        valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel label = new JLabel(labelText, SwingConstants.CENTER);
         label.setFont(LABEL_FONT);
