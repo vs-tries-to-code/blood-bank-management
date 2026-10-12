@@ -8,6 +8,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+import org.yourcompany.yourproject.inventory.InventoryManager;
+import org.yourcompany.yourproject.inventory.BloodGroup;
+import org.yourcompany.yourproject.inventory.BloodComponent;
+
 public class HospitalRequestPanel extends JPanel {
 
     private HospitalRequestRepository repository;
@@ -15,6 +19,8 @@ public class HospitalRequestPanel extends JPanel {
     private JTable requestTable;
     private final MainFrame mainFrame;
     private final String hospitalName;
+    private final InventoryManager inventoryManager =
+            new InventoryManager();
 
     public HospitalRequestPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -164,7 +170,77 @@ public class HospitalRequestPanel extends JPanel {
                 return;
             }
 
-            // Hospital name is taken from the logged-in user
+            // Check current stock
+            int availableStock;
+
+            try {
+                availableStock = inventoryManager.getAvailableStock(
+                        BloodGroup.valueOf(bloodGroup),
+                        BloodComponent.valueOf(component)
+                );
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Invalid blood group or component.",
+                        "Invalid Selection",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Handle database or stock-check errors
+            if (availableStock < 0) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Unable to check blood stock. Please try again.",
+                        "Stock Check Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Show the appropriate stock warning
+            if (availableStock == 0) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "OUT OF STOCK!\nNo available units of "
+                                + bloodGroup + " " + component + ".",
+                        "Out of Stock",
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+            } else if (availableStock < unitCount) {
+
+                String message =
+                        "INSUFFICIENT STOCK!\nRequested: "
+                                + unitCount
+                                + "\nAvailable: " + availableStock;
+
+                if (availableStock < 3) {
+                    message += "\n\nLOW STOCK ALERT!";
+                }
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        message,
+                        "Stock Warning",
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+            } else if (availableStock - unitCount < 3) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "LOW STOCK ALERT!\nRemaining after fulfilment: "
+                                + (availableStock - unitCount),
+                        "Low Stock",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+
+            // Create and save the request.
+            // This does NOT deduct inventory.
             HospitalRequest request = new HospitalRequest(
                     0,
                     hospitalName,
@@ -176,7 +252,6 @@ public class HospitalRequestPanel extends JPanel {
 
             repository.save(request);
 
-            // Refresh this hospital's requests
             loadRequests();
 
             JOptionPane.showMessageDialog(
