@@ -22,6 +22,8 @@ public class MainFrame extends JFrame {
 
     private String currentDashboardKey;
     private User currentUser;
+    private AdminDashboard adminDashboard;
+    private HospitalDashboard hospitalDashboard;
 
     public MainFrame() {
         DashboardTheme.apply();
@@ -46,7 +48,7 @@ public class MainFrame extends JFrame {
 
         mainPanel.add(loginPanel, "LOGIN");
         mainPanel.add(inventoryPanel, "INVENTORY");
-        mainPanel.add(new DonationHistoryUI(), "DONATIONS");
+        mainPanel.add(new DonationHistoryUI(this), "DONATIONS");
         mainPanel.add(new AdminRequestPanel(this), "ADMIN_REQUESTS");
 
         add(mainPanel);
@@ -61,14 +63,14 @@ public class MainFrame extends JFrame {
 
         if (user.getRole() == Role.ADMIN) {
             currentDashboardKey = "ADMIN";
-            AdminDashboard dashboard = new AdminDashboard(this);
-            mainPanel.add(dashboard, "ADMIN");
+            adminDashboard = new AdminDashboard(this);
+            mainPanel.add(adminDashboard, "ADMIN");
             cardLayout.show(mainPanel, "ADMIN");
 
         } else if (user.getRole() == Role.HOSPITAL) {
             currentDashboardKey = "HOSPITAL";
-            HospitalDashboard dashboard = new HospitalDashboard(this);
-            mainPanel.add(dashboard, "HOSPITAL");
+            hospitalDashboard = new HospitalDashboard(this);
+            mainPanel.add(hospitalDashboard, "HOSPITAL");
             cardLayout.show(mainPanel, "HOSPITAL");
         }
 
@@ -78,6 +80,11 @@ public class MainFrame extends JFrame {
 
     public void goBackToDashboard() {
         if (currentDashboardKey != null) {
+            if ("ADMIN".equals(currentDashboardKey) && adminDashboard != null) {
+                adminDashboard.refreshData();
+            } else if ("HOSPITAL".equals(currentDashboardKey) && hospitalDashboard != null) {
+                hospitalDashboard.refreshData();
+            }
             cardLayout.show(mainPanel, currentDashboardKey);
         } else {
             showLogin();

@@ -2,22 +2,21 @@ package org.yourcompany.yourproject.donation;
 
 public class DonationHistory {
 
-    private String donationId;
-    private String donorId;
-    private String donorName;
-    private String bloodGroup;
-    private String donationDate;
-    private String donationCenter;
+    private final String donationId;
+    private final String donorId;
+    private final String donorName;
+    private final String bloodGroup;
+    private final String donationDate;
+    private final int quantityMl;
 
     public DonationHistory(String donationId, String donorId, String donorName,
-                           String bloodGroup, String donationDate, String donationCenter) {
-
+                           String bloodGroup, String donationDate, int quantityMl) {
         this.donationId = donationId;
         this.donorId = donorId;
         this.donorName = donorName;
         this.bloodGroup = bloodGroup;
         this.donationDate = donationDate;
-        this.donationCenter = donationCenter;
+        this.quantityMl = quantityMl;
     }
 
     public String getDonationId() {
@@ -40,7 +39,7 @@ public class DonationHistory {
         return donationDate;
     }
 
-    public String getDonationCenter() {
-        return donationCenter;
+    public int getQuantityMl() {
+        return quantityMl;
     }
 }
