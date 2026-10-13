@@ -1,87 +1,72 @@
-package org.yourcompany.yourproject.compatibility_reservation;
 
-import javax.swing.*;
-import java.awt.*;
+package org.yourcompany.yourproject.compatibility_reservation;
 
 import org.yourcompany.yourproject.inventory.BloodComponent;
 import org.yourcompany.yourproject.inventory.BloodGroup;
 import org.yourcompany.yourproject.inventory.BloodUnit;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class ReservationPanel extends JFrame {
 
-    private JComboBox<String> bloodGroupBox;
+    private JComboBox<BloodGroup> bloodGroupBox;
     private JComboBox<BloodComponent> componentBox;
     private JTextField patientIdField;
+    private JTextField reservationIdField;
 
     private JLabel unitIdLabel;
     private JLabel unitGroupLabel;
     private JLabel unitComponentLabel;
     private JLabel unitStatusLabel;
+    private JLabel reservationIdLabel;
 
-    private Reservation reservation;
+    private final Reservation reservation;
+
+    private int currentReservationId = -1;
     private BloodUnit reservedUnit;
 
     public ReservationPanel() {
 
         reservation = new Reservation();
 
-        setTitle("Blood Reservation");
-        setSize(600, 500);
+        setTitle("Blood Bank - Reservation");
+        setSize(650, 550);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout(10, 10));
 
         // Title
-        JLabel title = new JLabel("Blood Reservation");
+        JLabel title = new JLabel(
+                "Blood Reservation",
+                SwingConstants.CENTER
+        );
         title.setFont(new Font("Arial", Font.BOLD, 24));
-        title.setHorizontalAlignment(SwingConstants.CENTER);
-
+        title.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
         add(title, BorderLayout.NORTH);
 
         // Form
-        JPanel formPanel = new JPanel(
-                new GridLayout(4, 2, 10, 10)
-        );
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 12));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(15, 35, 15, 35));
 
-        formPanel.setBorder(
-                BorderFactory.createEmptyBorder(30, 50, 20, 50)
-        );
-
-        // Patient ID
         formPanel.add(new JLabel("Patient ID:"));
         patientIdField = new JTextField();
         formPanel.add(patientIdField);
 
-        // Blood Group
-        JLabel bloodGroupLabel =
-                new JLabel("Recipient Blood Group:");
-
-        String[] bloodGroups = {
-                "A+", "A-", "B+", "B-",
-                "AB+", "AB-", "O+", "O-"
-        };
-
-        bloodGroupBox = new JComboBox<>(bloodGroups);
-
-        formPanel.add(bloodGroupLabel);
+        formPanel.add(new JLabel("Recipient Blood Group:"));
+        bloodGroupBox = new JComboBox<>(BloodGroup.values());
         formPanel.add(bloodGroupBox);
 
-        // Blood Component
-        JLabel componentLabel =
-                new JLabel("Blood Component:");
-
-        componentBox = new JComboBox<>(
-                BloodComponent.values()
-        );
-
-        formPanel.add(componentLabel);
+        formPanel.add(new JLabel("Blood Component:"));
+        componentBox = new JComboBox<>(BloodComponent.values());
         formPanel.add(componentBox);
 
-        // Buttons
-        JButton reserveButton =
-                new JButton("Find & Reserve");
+        formPanel.add(new JLabel("Reservation ID to cancel:"));
+        reservationIdField = new JTextField();
+        formPanel.add(reservationIdField);
 
-        JButton cancelButton =
-                new JButton("Cancel Reservation");
+        JButton reserveButton = new JButton("Find and Reserve");
+        JButton cancelButton = new JButton("Cancel Reservation");
 
         formPanel.add(reserveButton);
         formPanel.add(cancelButton);
@@ -89,188 +74,197 @@ public class ReservationPanel extends JFrame {
         add(formPanel, BorderLayout.CENTER);
 
         // Reservation details
-        JPanel resultPanel = new JPanel(
-                new GridLayout(4, 2, 10, 10)
-        );
+        JPanel detailsPanel = new JPanel(new GridLayout(5, 2, 10, 8));
+        detailsPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Reservation Details"),
+                BorderFactory.createEmptyBorder(10, 20, 15, 20)
+        ));
 
-        resultPanel.setBorder(
-                BorderFactory.createTitledBorder(
-                        "Reservation Details"
-                )
-        );
+        detailsPanel.add(new JLabel("Reservation ID:"));
+        reservationIdLabel = new JLabel("-");
+        detailsPanel.add(reservationIdLabel);
 
-        resultPanel.add(new JLabel("Unit ID:"));
+        detailsPanel.add(new JLabel("Blood Unit ID:"));
         unitIdLabel = new JLabel("-");
-        resultPanel.add(unitIdLabel);
+        detailsPanel.add(unitIdLabel);
 
-        resultPanel.add(new JLabel("Blood Group:"));
+        detailsPanel.add(new JLabel("Blood Group:"));
         unitGroupLabel = new JLabel("-");
-        resultPanel.add(unitGroupLabel);
+        detailsPanel.add(unitGroupLabel);
 
-        resultPanel.add(new JLabel("Component:"));
+        detailsPanel.add(new JLabel("Component:"));
         unitComponentLabel = new JLabel("-");
-        resultPanel.add(unitComponentLabel);
+        detailsPanel.add(unitComponentLabel);
 
-        resultPanel.add(new JLabel("Status:"));
+        detailsPanel.add(new JLabel("Status:"));
         unitStatusLabel = new JLabel("-");
-        resultPanel.add(unitStatusLabel);
+        detailsPanel.add(unitStatusLabel);
 
-        add(resultPanel, BorderLayout.SOUTH);
+        add(detailsPanel, BorderLayout.SOUTH);
 
         // Reserve button
-        reserveButton.addActionListener(e -> {
-
-            String patientIdText =
-                    patientIdField.getText().trim();
-
-            if (patientIdText.isEmpty()) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Please enter Patient ID."
-                );
-                return;
-            }
-
-            int patientId;
-
-            try {
-                patientId = Integer.parseInt(patientIdText);
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Patient ID must be a number."
-                );
-                return;
-            }
-
-            String selectedGroup =
-                    (String) bloodGroupBox.getSelectedItem();
-
-            BloodGroup recipient =
-                    convertBloodGroup(selectedGroup);
-
-            BloodComponent component =
-                    (BloodComponent) componentBox.getSelectedItem();
-
-            reservedUnit =
-                    reservation.reserveAvailableUnit(
-                            recipient,
-                            component
-                    );
-
-            if (reservedUnit != null) {
-
-                boolean saved =
-                        reservation.saveReservation(
-                                patientId,
-                                reservedUnit
-                        );
-
-                if (!saved) {
-
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Blood unit found, but reservation could not be saved."
-                    );
-
-                    reservedUnit = null;
-                    return;
-                }
-
-                unitIdLabel.setText(
-                        String.valueOf(
-                                reservedUnit.getUnitId()
-                        )
-                );
-
-                unitGroupLabel.setText(
-                        reservedUnit.getBloodGroup().toString()
-                );
-
-                unitComponentLabel.setText(
-                        reservedUnit.getComponent().toString()
-                );
-
-                unitStatusLabel.setText(
-                        reservedUnit.getStatus().toString()
-                );
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Blood unit reserved successfully!"
-                );
-
-            } else {
-
-                unitIdLabel.setText("-");
-                unitGroupLabel.setText("-");
-                unitComponentLabel.setText("-");
-                unitStatusLabel.setText("-");
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "No compatible blood unit available."
-                );
-            }
-        });
+        reserveButton.addActionListener(e -> reserveBlood());
 
         // Cancel button
-        cancelButton.addActionListener(e -> {
-
-            if (reservedUnit == null) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "There is no reservation to cancel."
-                );
-
-                return;
-            }
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Reservation cancellation will be connected to the database during final integration."
-            );
-        });
+        cancelButton.addActionListener(e -> cancelReservation());
     }
 
-    private BloodGroup convertBloodGroup(String group) {
+    private void reserveBlood() {
 
-        switch (group) {
+        String patientText = patientIdField.getText().trim();
 
-            case "A+":
-                return BloodGroup.A_POSITIVE;
+        if (patientText.isEmpty()) {
+            showMessage("Please enter the Patient ID.");
+            return;
+        }
 
-            case "A-":
-                return BloodGroup.A_NEGATIVE;
+        int patientId;
 
-            case "B+":
-                return BloodGroup.B_POSITIVE;
+        try {
+            patientId = Integer.parseInt(patientText);
 
-            case "B-":
-                return BloodGroup.B_NEGATIVE;
+            if (patientId <= 0) {
+                showMessage("Patient ID must be a positive number.");
+                return;
+            }
+        } catch (NumberFormatException ex) {
+            showMessage("Patient ID must be a valid integer.");
+            return;
+        }
 
-            case "AB+":
-                return BloodGroup.AB_POSITIVE;
+        BloodGroup recipient =
+                (BloodGroup) bloodGroupBox.getSelectedItem();
 
-            case "AB-":
-                return BloodGroup.AB_NEGATIVE;
+        BloodComponent component =
+                (BloodComponent) componentBox.getSelectedItem();
 
-            case "O+":
-                return BloodGroup.O_POSITIVE;
+        if (recipient == null || component == null) {
+            showMessage("Please select a blood group and component.");
+            return;
+        }
 
-            case "O-":
-                return BloodGroup.O_NEGATIVE;
+        // Find a compatible candidate.
+        BloodUnit candidate =
+                reservation.reserveAvailableUnit(recipient, component);
 
-            default:
-                return null;
+        if (candidate == null) {
+            clearDetails();
+            showMessage("No compatible blood unit was found.");
+            return;
+        }
+
+        // The database repository performs the actual reservation.
+        // A successful result is the generated reservation ID.
+        int newReservationId =
+                reservation.saveReservation(patientId, candidate);
+
+        if (newReservationId == -1) {
+            clearDetails();
+            showMessage(
+                    "Reservation failed. The unit may no longer be available, " +
+                    "the patient may not exist, or a database error occurred."
+            );
+            return;
+        }
+
+        currentReservationId = newReservationId;
+        reservedUnit = candidate;
+
+        reservationIdField.setText(String.valueOf(newReservationId));
+        reservationIdLabel.setText(String.valueOf(newReservationId));
+        unitIdLabel.setText(String.valueOf(candidate.getUnitId()));
+        unitGroupLabel.setText(candidate.getBloodGroup().toString());
+        unitComponentLabel.setText(candidate.getComponent().toString());
+        unitStatusLabel.setText("RESERVED");
+
+        showMessage(
+                "Reservation successful!\nReservation ID: " + newReservationId +
+                "\nBlood Unit ID: " + candidate.getUnitId()
+        );
+    }
+
+    private void cancelReservation() {
+
+        String idText = reservationIdField.getText().trim();
+
+        int reservationId;
+
+        if (idText.isEmpty()) {
+            reservationId = currentReservationId;
+        } else {
+            try {
+                reservationId = Integer.parseInt(idText);
+
+                if (reservationId <= 0) {
+                    showMessage("Reservation ID must be a positive number.");
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                showMessage("Reservation ID must be a valid integer.");
+                return;
+            }
+        }
+
+        if (reservationId == -1) {
+            showMessage("Enter a reservation ID to cancel.");
+            return;
+        }
+
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Cancel reservation " + reservationId + "?",
+                "Confirm Cancellation",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (choice != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        boolean cancelled = reservation.cancelReservation(reservationId);
+
+        if (cancelled) {
+            if (reservationId == currentReservationId) {
+                currentReservationId = -1;
+                reservedUnit = null;
+            }
+
+            clearDetails();
+            reservationIdField.setText("");
+
+            showMessage(
+                    "Reservation " + reservationId +
+                    " was cancelled successfully."
+            );
+        } else {
+            showMessage(
+                    "Cancellation failed. Check that the reservation exists " +
+                    "and is still RESERVED."
+            );
         }
     }
 
-    public static void main(String[] args) {
+    private void clearDetails() {
+        reservationIdLabel.setText("-");
+        unitIdLabel.setText("-");
+        unitGroupLabel.setText("-");
+        unitComponentLabel.setText("-");
+        unitStatusLabel.setText("-");
+    }
 
+    private void showMessage(String message) {
+        JOptionPane.showMessageDialog(
+                this,
+                message,
+                "Blood Reservation",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new ReservationPanel().setVisible(true);
+            ReservationPanel panel = new ReservationPanel();
+            panel.setVisible(true);
         });
     }
 }
