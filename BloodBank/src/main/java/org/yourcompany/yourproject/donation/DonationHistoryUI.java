@@ -2,6 +2,7 @@ package org.yourcompany.yourproject.donation;
 
 import com.bloodbank.dashboard.DashboardTheme;
 import com.bloodbank.dashboard.MainFrame;
+import org.yourcompany.yourproject.inventory.BloodGroup;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -62,48 +63,78 @@ public class DonationHistoryUI extends JPanel {
     }
 
     private void addDonation() {
-        String donorIdInput = JOptionPane.showInputDialog(this, "Enter an existing donor ID:");
-        if (donorIdInput == null) {
+        JTextField donorNameField = new JTextField(18);
+        JComboBox<BloodGroup> bloodGroupBox = new JComboBox<>(BloodGroup.values());
+        JTextField phoneField = new JTextField(18);
+        JTextField ageField = new JTextField("18", 18);
+        JComboBox<String> genderBox = new JComboBox<>(
+                new String[]{"FEMALE", "MALE", "OTHER", "UNSPECIFIED"});
+        JTextField dateField = new JTextField(LocalDate.now().toString(), 18);
+        JTextField quantityField = new JTextField("350", 18);
+
+        JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+        form.add(new JLabel("Donor name:"));
+        form.add(donorNameField);
+        form.add(new JLabel("Blood group:"));
+        form.add(bloodGroupBox);
+        form.add(new JLabel("Phone (used to find existing donors):"));
+        form.add(phoneField);
+        form.add(new JLabel("Age:"));
+        form.add(ageField);
+        form.add(new JLabel("Gender:"));
+        form.add(genderBox);
+        form.add(new JLabel("Donation date (YYYY-MM-DD):"));
+        form.add(dateField);
+        form.add(new JLabel("Quantity (ml):"));
+        form.add(quantityField);
+
+        int result = JOptionPane.showConfirmDialog(
+                this, form, "Add Donation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) {
             return;
         }
 
-        String dateInput = JOptionPane.showInputDialog(
-                this, "Donation date (YYYY-MM-DD):", LocalDate.now().toString());
-        if (dateInput == null) {
-            return;
-        }
-
-        String quantityInput = JOptionPane.showInputDialog(this, "Quantity in milliliters:", "350");
-        if (quantityInput == null) {
-            return;
-        }
-
-        int donorId;
+        String donorName = donorNameField.getText().trim();
+        String phone = phoneField.getText().trim();
+        String ageInput = ageField.getText().trim();
+        String dateInput = dateField.getText().trim();
+        String quantityInput = quantityField.getText().trim();
+        int age;
         int quantityMl;
         LocalDate donationDate;
         try {
-            donorId = Integer.parseInt(donorIdInput.trim());
-            donationDate = LocalDate.parse(dateInput.trim());
-            quantityMl = Integer.parseInt(quantityInput.trim());
-            if (donorId <= 0 || quantityMl <= 0) {
-                throw new IllegalArgumentException();
+            age = Integer.parseInt(ageInput);
+            donationDate = LocalDate.parse(dateInput);
+            quantityMl = Integer.parseInt(quantityInput);
+            if (donorName.isBlank() || phone.isBlank() || age <= 0 || age > 130 || quantityMl <= 0) {
+                throw new IllegalArgumentException("Donor details and positive age/quantity are required.");
             }
         } catch (RuntimeException exception) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Enter a positive donor ID, a valid date (YYYY-MM-DD), and a positive quantity.",
-                    "Invalid Donation",
+                    "Enter a donor name and phone, an age from 1 to 130, a valid date (YYYY-MM-DD), and a positive quantity.",
+                    "Invalid Donation Details",
                     JOptionPane.ERROR_MESSAGE
             );
             return;
         }
+
+        Donor donor = new Donor(
+                null,
+                donorName,
+                age,
+                (String) genderBox.getSelectedItem(),
+                ((BloodGroup) bloodGroupBox.getSelectedItem()).name(),
+                phone,
+                null
+        );
 
         addButton.setEnabled(false);
         statusLabel.setText("Saving donation...");
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws SQLException {
-                repository.save(donorId, donationDate, quantityMl);
+                repository.save(donor, donationDate, quantityMl);
                 return null;
             }
 
@@ -159,7 +190,7 @@ public class DonationHistoryUI extends JPanel {
         statusLabel.setText("Could not save donation.");
         JOptionPane.showMessageDialog(
                 this,
-                "Could not save donation. Confirm that the donor ID exists and the database is available.\n"
+                "Could not save donation. Check the donor details and database connection.\n"
                         + error.getMessage(),
                 "Save Failed",
                 JOptionPane.ERROR_MESSAGE
